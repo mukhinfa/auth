@@ -26,7 +26,7 @@ type server struct {
 }
 
 func (s *server) Get(_ context.Context, req *desc.GetRequest) (*desc.GetResponse, error) {
-	log.Printf("Get user request: %v", req.Id)
+	log.Println(color.RedString("Get user request:"), fmt.Sprintf("%+v", req))
 
 	return &desc.GetResponse{
 		Id:        req.Id,
@@ -39,7 +39,7 @@ func (s *server) Get(_ context.Context, req *desc.GetRequest) (*desc.GetResponse
 }
 
 func (s *server) Create(_ context.Context, req *desc.CreateRequest) (*desc.CreateResponse, error) {
-	log.Printf("Create user request: %v", req)
+	log.Println(color.RedString("Create user request:"), fmt.Sprintf("%+v", req))
 
 	return &desc.CreateResponse{
 		Id: int64(gofakeit.Number(1, 100)),
@@ -47,12 +47,12 @@ func (s *server) Create(_ context.Context, req *desc.CreateRequest) (*desc.Creat
 }
 
 func (s *server) Update(_ context.Context, req *desc.UpdateRequest) (*emptypb.Empty, error) {
-	log.Printf("Update user request: %v", req)
+	log.Println(color.RedString("Update user request:"), fmt.Sprintf("%+v", req))
 	return &emptypb.Empty{}, nil
 }
 
 func (s *server) Delete(_ context.Context, req *desc.DeleteRequest) (*emptypb.Empty, error) {
-	log.Printf("Delete user request: %v", req)
+	log.Println(color.RedString("Delete user request:"), fmt.Sprintf("%+v", req))
 	return &emptypb.Empty{}, nil
 }
 
