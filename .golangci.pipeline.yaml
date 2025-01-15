@@ -21,6 +21,15 @@ output:
   print-linter-name: true
 
 linters-settings:
+  gci:
+    sections:
+      - standard
+      - blank
+      - prefix(github.com/muhinfa)
+      - blank
+      - default
+    skip-generated: false
+    skip-comments: true
   govet:
     shadow: true
   dupl:
@@ -41,7 +50,8 @@ linters:
     - revive
     - typecheck
     - unused
-
+    - gci
+    - gocyclo
 issues:
   exclude-use-default: false
   exclude:

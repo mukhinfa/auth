@@ -7,14 +7,14 @@ import (
 	"net"
 	"time"
 
-	"github.com/brianvoe/gofakeit"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/fatih/color"
-	desc "github.com/muhinfa/auth/pkg/user/v1"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	desc "github.com/muhinfa/auth/pkg/user/v1"
 )
 
 const (
