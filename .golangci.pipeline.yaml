@@ -25,7 +25,7 @@ linters-settings:
     sections:
       - standard
       - blank
-      - prefix(github.com/muhinfa)
+      - prefix(github.com/mukhinfa)
       - blank
       - default
     skip-generated: false

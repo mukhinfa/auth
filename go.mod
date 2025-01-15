@@ -1,4 +1,4 @@
-module github.com/muhinfa/auth
+module github.com/mukhinfa/auth
 
 go 1.23
 

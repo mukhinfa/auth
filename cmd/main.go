@@ -14,7 +14,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	desc "github.com/muhinfa/auth/pkg/user/v1"
+	desc "github.com/mukhinfa/auth/pkg/user/v1"
 )
 
 const (
@@ -58,10 +58,12 @@ func (s *server) Delete(_ context.Context, req *desc.DeleteRequest) (*emptypb.Em
 
 func main() {
 	log.Println(color.GreenString("Starting server..."))
+
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+
 	s := grpc.NewServer()
 	reflection.Register(s)
 	desc.RegisterUserServiceV1Server(s, &server{})
