@@ -7,43 +7,95 @@ import (
 	"net"
 	"time"
 
-	"github.com/brianvoe/gofakeit/v7"
 	"github.com/fatih/color"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v4/pgxpool"
 	desc "github.com/mukhinfa/auth/pkg/user/v1"
 )
 
 const (
 	grpcPort = 50051
+	dbDSN    = "host=localhost port=54321 dbname=note user=note-user password=note-password sslmode=disable"
 )
 
 type server struct {
 	desc.UnimplementedUserServiceV1Server
 }
 
-func (s *server) Get(_ context.Context, req *desc.GetRequest) (*desc.GetResponse, error) {
+func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetResponse, error) {
 	log.Println(color.RedString("Get user request:"), fmt.Sprintf("%+v", req))
 
+	pool, err := pgxpool.Connect(ctx, dbDSN)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	}
+	defer pool.Close()
+
+	builderSelectOne := sq.Select("id", "name", "email", "role", "created_at", "updated_at").
+		From("users").
+		PlaceholderFormat(sq.Dollar).
+		Where(sq.Eq{"id": req.Id}).
+		Limit(1)
+
+	query, args, err := builderSelectOne.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build query: %w", err)
+	}
+
+	var id int64
+	var name string
+	var email string
+	var role desc.Role
+	var createdAt time.Time
+	var updatedAt time.Time
+
+	err = pool.QueryRow(ctx, query, args...).Scan(&id, &name, &email, &role, &createdAt, &updatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to select user: %w", err)
+	}
+
 	return &desc.GetResponse{
-		Id:        req.Id,
-		Name:      gofakeit.Name(),
-		Email:     gofakeit.Email(),
-		Role:      desc.Role(gofakeit.Number(1, 3)), //nolint:gosec // The range of values is specified
-		CreatedAt: timestamppb.New(time.Now()),
-		UpdatedAt: timestamppb.New(time.Now()),
+		Id:        id,
+		Name:      name,
+		Email:     email,
+		Role:      role,
+		CreatedAt: timestamppb.New(createdAt),
+		UpdatedAt: timestamppb.New(updatedAt),
 	}, nil
 }
 
-func (s *server) Create(_ context.Context, req *desc.CreateRequest) (*desc.CreateResponse, error) {
+func (s *server) Create(ctx context.Context, req *desc.CreateRequest) (*desc.CreateResponse, error) {
 	log.Println(color.RedString("Create user request:"), fmt.Sprintf("%+v", req))
 
-	return &desc.CreateResponse{
-		Id: int64(gofakeit.Number(1, 100)),
-	}, nil
+	pool, err := pgxpool.Connect(ctx, dbDSN)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	}
+	defer pool.Close()
+
+	builderInsert := sq.Insert("users").
+		Columns("name", "email", "role").
+		Values(req.Name, req.Email, req.Role).
+		PlaceholderFormat(sq.Dollar).
+		Suffix("RETURNING id")
+
+	query, args, err := builderInsert.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build query: %w", err)
+	}
+
+	var id int64
+	err = pool.QueryRow(ctx, query, args...).Scan(&id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	return &desc.CreateResponse{Id: id}, nil
 }
 
 func (s *server) Update(_ context.Context, req *desc.UpdateRequest) (*emptypb.Empty, error) {
