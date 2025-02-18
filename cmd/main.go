@@ -16,6 +16,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4/pgxpool"
 	desc "github.com/mukhinfa/auth/pkg/user/v1"
+	user_v1 "github.com/mukhinfa/auth/pkg/user/v1"
 )
 
 const (
@@ -50,7 +51,7 @@ func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetRespon
 	var id int64
 	var name string
 	var email string
-	var role desc.Role
+	var role string // Изменено на string
 	var createdAt time.Time
 	var updatedAt time.Time
 
@@ -59,11 +60,16 @@ func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetRespon
 		return nil, fmt.Errorf("failed to select user: %w", err)
 	}
 
+	roleEnum, ok := desc.Role_value[role]
+	if !ok {
+		return nil, fmt.Errorf("invalid role value: %s", role)
+	}
+
 	return &desc.GetResponse{
 		Id:        id,
 		Name:      name,
 		Email:     email,
-		Role:      role,
+		Role:      desc.Role(roleEnum),
 		CreatedAt: timestamppb.New(createdAt),
 		UpdatedAt: timestamppb.New(updatedAt),
 	}, nil
@@ -79,8 +85,8 @@ func (s *server) Create(ctx context.Context, req *desc.CreateRequest) (*desc.Cre
 	defer pool.Close()
 
 	builderInsert := sq.Insert("users").
-		Columns("name", "email", "role").
-		Values(req.Name, req.Email, req.Role).
+		Columns("name", "email", "password", "role").
+		Values(req.Name, req.Email, req.Password, user_v1.Role_name[int32(req.Role)]).
 		PlaceholderFormat(sq.Dollar).
 		Suffix("RETURNING id")
 
